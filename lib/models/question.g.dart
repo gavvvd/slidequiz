@@ -25,7 +25,7 @@ class QuestionAdapter extends TypeAdapter<Question> {
       points: fields[5] as int,
       timerSeconds: fields[6] as int?,
       acceptedAnswers: (fields[9] as List?)?.cast<String>(),
-      isOrdered: fields[10] as bool? ?? false,
+      isOrdered: fields[10] as bool,
       createdAt: fields[7] as DateTime?,
       updatedAt: fields[8] as DateTime?,
     );
@@ -34,7 +34,7 @@ class QuestionAdapter extends TypeAdapter<Question> {
   @override
   void write(BinaryWriter writer, Question obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(11)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)

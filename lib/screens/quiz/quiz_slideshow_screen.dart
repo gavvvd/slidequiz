@@ -6,13 +6,12 @@ import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/answer_key_screen.dart';
 import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quiz/quiz_completion_screen.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizSlideshowScreen extends StatefulWidget {
   final Quiz quiz;
   final List<Question> questions;
-  final Map<String, List<Choice>>? questionChoices; 
-  final String? setName; 
+  final Map<String, List<Choice>>? questionChoices;
+  final String? setName;
 
   const QuizSlideshowScreen({
     super.key,
@@ -42,7 +41,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
 
   void _initializeQuiz() {
     _questions = List.from(widget.questions);
-    
+
     if (widget.questionChoices != null) {
       _questionChoices = widget.questionChoices!;
     } else {
@@ -56,11 +55,11 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
         if (question.type == Question.typeMultipleChoice ||
             question.type == Question.typeIdentification) {
           var choices = _hiveService.getChoicesByQuestion(question.id);
-          
+
           if (widget.quiz.randomizeChoices) {
             choices.shuffle();
           }
-          
+
           _questionChoices[question.id] = choices;
         }
       }
@@ -114,8 +113,6 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     }
   }
 
-
-
   void _finishQuiz() {
     _timer?.cancel();
     Navigator.pushReplacement(
@@ -136,16 +133,17 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     double questionFontSize = screenHeight * 0.05; // 5% of screen height
     double choiceFontSize = screenHeight * 0.035; // 3.5% of screen height
     double numberFontSize = screenHeight * 0.03; // 3% of screen height
-    
+
     // Define the current question for use in the UI
     final question = _questions[_currentIndex];
 
     return Scaffold(
-      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
-        title: Text(widget.setName != null 
-            ? '${widget.quiz.name} - ${widget.setName}'
-            : '${widget.quiz.name} Quiz'),
+        title: Text(
+          widget.setName != null
+              ? '${widget.quiz.name} - ${widget.setName}'
+              : '${widget.quiz.name} Quiz',
+        ),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         actions: [
           IconButton(
@@ -201,20 +199,23 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                   // Header Row: Question Number + Type Badge
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                     children: [
-                       Text(
-                         'Question ${_currentIndex + 1} of ${_questions.length}',
-                         style: TextStyle(
-                           fontSize: numberFontSize,
-                           fontWeight: FontWeight.bold,
-                           color: Colors.grey[700],
-                         ),
-                       ),
-                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  // Header Row: Question Number + Type Badge
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Question ${_currentIndex + 1} of ${_questions.length}',
+                        style: TextStyle(
+                          fontSize: numberFontSize,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         decoration: BoxDecoration(
                           color: _getTypeColor(question.type),
                           borderRadius: BorderRadius.circular(20),
@@ -222,50 +223,50 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                         child: Text(
                           question.type,
                           style: TextStyle(
-                            color: Colors.white, 
-                            fontWeight: FontWeight.bold, 
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
                             fontSize: numberFontSize * 0.6,
                           ),
                         ),
                       ),
-                     ],
-                   ),
-                   SizedBox(height: screenHeight * 0.02),
+                    ],
+                  ),
+                  SizedBox(height: screenHeight * 0.02),
 
-                   // Question Text Container - Consumes remaining space
-                   Expanded(
-                     child: Container(
-                       alignment: Alignment.center, // Center text vertically
-                       decoration: BoxDecoration(
-                         color: Colors.grey[50], // Subtle background to show container
-                         borderRadius: BorderRadius.circular(16),
-                       ),
-                       padding: EdgeInsets.all(screenHeight * 0.02),
-                       child: SingleChildScrollView( 
-                         child: Text(
-                           question.questionText,
-                           textAlign: TextAlign.center,
-                           style: TextStyle(
-                             fontSize: questionFontSize, 
-                             fontWeight: FontWeight.bold,
-                             height: 1.3,
-                             color: Colors.black,
-                           ),
-                         ),
-                       ),
-                     ),
-                   ),
-                   SizedBox(height: screenHeight * 0.03),
+                  // Question Text Container - Consumes remaining space
+                  Expanded(
+                    child: Container(
+                      alignment: Alignment.center, // Center text vertically
+                      decoration: BoxDecoration(
+                        color: Colors
+                            .grey[50], // Subtle background to show container
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      padding: EdgeInsets.all(screenHeight * 0.02),
+                      child: SingleChildScrollView(
+                        child: Text(
+                          question.questionText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: questionFontSize,
+                            fontWeight: FontWeight.bold,
+                            height: 1.3,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: screenHeight * 0.03),
 
-                   // Choices Area
-                   _buildAnswerDisplay(question, choiceFontSize),
+                  // Choices Area
+                  _buildAnswerDisplay(question, choiceFontSize),
                 ],
               ),
             ),
           ),
-          
-          // Navigation buttons ...
 
+          // Navigation buttons ...
 
           // Navigation buttons
           Container(
@@ -305,9 +306,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                           : Icons.check,
                     ),
                     label: Text(
-                      _currentIndex < _questions.length - 1
-                          ? 'Next'
-                          : 'Finish',
+                      _currentIndex < _questions.length - 1 ? 'Next' : 'Finish',
                     ),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.all(16),
@@ -347,8 +346,8 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2, 
-        childAspectRatio: 2.5, 
+        crossAxisCount: 2,
+        childAspectRatio: 2.5,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -356,7 +355,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
       itemBuilder: (context, index) {
         final choice = choices[index];
         final displayLabel = labels[index];
-        
+
         return Container(
           decoration: BoxDecoration(
             color: Colors.white,
@@ -390,7 +389,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                   child: Text(
                     choice.text,
                     style: TextStyle(
-                      fontSize: fontSize, 
+                      fontSize: fontSize,
                       fontWeight: FontWeight.w500,
                       color: Colors.black87,
                     ),
@@ -419,7 +418,14 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,
-              child: Text('True', style: TextStyle(fontSize: fontSize * 2, fontWeight: FontWeight.bold, color: Colors.green)),
+              child: Text(
+                'True',
+                style: TextStyle(
+                  fontSize: fontSize * 2,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.green,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 16),
@@ -431,38 +437,50 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               alignment: Alignment.center,
-              child: Text('False', style: TextStyle(fontSize: fontSize * 2, fontWeight: FontWeight.bold, color: Colors.red)),
+              child: Text(
+                'False',
+                style: TextStyle(
+                  fontSize: fontSize * 2,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.red,
+                ),
+              ),
             ),
           ),
         ],
       ),
     );
   }
-  
+
   Widget _buildIdentificationDisplay(Question question) {
     // User requested empty/minimal display for Identification?
     return const SizedBox();
   }
 
   Widget _buildEnumerationDisplay(double fontSize) {
-     return Container(
-       padding: EdgeInsets.all(fontSize),
-       decoration: BoxDecoration(
-         color: Colors.purple[50],
-         borderRadius: BorderRadius.circular(8),
-       ),
-       child: Row(
-         children: [
-            Icon(Icons.format_list_numbered, color: Colors.purple, size: fontSize * 2),
-            SizedBox(width: 12),
-            Expanded(
-              child: Text('Students will provide multiple answers', 
-                style: TextStyle(fontWeight: FontWeight.w500, fontSize: fontSize)
-              ),
+    return Container(
+      padding: EdgeInsets.all(fontSize),
+      decoration: BoxDecoration(
+        color: Colors.purple[50],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.format_list_numbered,
+            color: Colors.purple,
+            size: fontSize * 2,
+          ),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Students will provide multiple answers',
+              style: TextStyle(fontWeight: FontWeight.w500, fontSize: fontSize),
             ),
-         ],
-       ),
-     );
+          ),
+        ],
+      ),
+    );
   }
 
   String _formatTime(int seconds) {

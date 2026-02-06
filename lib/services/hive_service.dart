@@ -4,6 +4,7 @@ import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/models/quiz_set.dart';
+import 'package:slidequiz/models/user_profile.dart';
 
 class HiveService {
   static final HiveService _instance = HiveService._internal();
@@ -41,6 +42,9 @@ class HiveService {
     }
     if (!Hive.isAdapterRegistered(4)) {
       Hive.registerAdapter(QuizSetAdapter());
+    }
+    if (!Hive.isAdapterRegistered(5)) {
+      Hive.registerAdapter(UserProfileAdapter());
     }
 
     // Open boxes

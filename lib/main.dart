@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:slidequiz/services/hive_service.dart';
-import 'package:slidequiz/screens/subjects/subject_list_screen.dart';
+import 'package:slidequiz/services/auth_service.dart';
+import 'package:slidequiz/screens/auth/auth_wrapper.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -8,8 +10,17 @@ void main() async {
   // Initialize Hive
   final hiveService = HiveService();
   await hiveService.init();
+
+  // Initialize Auth Service
+  final authService = AuthService();
+  await authService.init();
   
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider.value(
+      value: authService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -24,7 +35,7 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const SubjectListScreen(),
+      home: const AuthWrapper(),
     );
   }
 }
