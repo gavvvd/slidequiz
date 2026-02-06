@@ -7,6 +7,7 @@ import 'package:slidequiz/models/quiz_set.dart';
 import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 import 'package:uuid/uuid.dart';
 import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuestionListScreen extends StatefulWidget {
   final Quiz quiz;
@@ -443,6 +444,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                 );
               },
             ),
+      bottomNavigationBar: const CopyrightFooter(),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

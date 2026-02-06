@@ -5,6 +5,7 @@ import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quizzes/quiz_form_screen.dart';
 import 'package:slidequiz/screens/questions/question_list_screen.dart';
 import 'package:slidequiz/screens/quiz_sets/quiz_set_list_screen.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizListScreen extends StatefulWidget {
   final Subject subject;
@@ -99,6 +100,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text(widget.subject.name),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,

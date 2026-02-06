@@ -3,6 +3,7 @@ import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/services/hive_service.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuestionFormScreen extends StatefulWidget {
   final Quiz quiz;
@@ -352,6 +353,7 @@ class _QuestionFormScreenState extends State<QuestionFormScreen> {
                 textStyle: const TextStyle(fontSize: 18),
               ),
             ),
+            const CopyrightFooter(),
           ],
         ),
       ),

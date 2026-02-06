@@ -4,6 +4,7 @@ import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
 import 'package:slidequiz/services/hive_service.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizIntroScreen extends StatefulWidget {
   final Quiz quiz;
@@ -77,6 +78,7 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const CopyrightFooter(),
       backgroundColor: Colors.white,
       body: Center(
         child: Padding(

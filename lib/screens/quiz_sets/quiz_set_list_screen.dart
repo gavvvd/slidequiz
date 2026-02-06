@@ -5,6 +5,7 @@ import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizSetListScreen extends StatefulWidget {
   final Quiz quiz;
@@ -172,6 +173,7 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text('${widget.quiz.name} - Sets'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,

@@ -6,6 +6,7 @@ import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/answer_key_screen.dart';
 import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quiz/quiz_completion_screen.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizSlideshowScreen extends StatefulWidget {
   final Quiz quiz;
@@ -140,6 +141,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     final question = _questions[_currentIndex];
 
     return Scaffold(
+      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text(widget.setName != null 
             ? '${widget.quiz.name} - ${widget.setName}'

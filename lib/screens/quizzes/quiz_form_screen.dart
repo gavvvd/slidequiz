@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slidequiz/models/subject.dart';
 import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/services/hive_service.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizFormScreen extends StatefulWidget {
   final Subject subject;
@@ -81,6 +82,7 @@ class _QuizFormScreenState extends State<QuizFormScreen> {
     final isEditing = widget.quiz != null;
 
     return Scaffold(
+      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Quiz' : 'Add Quiz'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/answer_key_screen.dart';
+import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
   final List<Question> questions;
@@ -60,6 +61,7 @@ class QuizCompletionScreen extends StatelessWidget {
           ],
         ),
       ),
+      bottomNavigationBar: const CopyrightFooter(),
     );
   }
 }
