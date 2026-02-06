@@ -130,9 +130,9 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
   Widget build(BuildContext context) {
     // Dynamic sizing helper
     double screenHeight = MediaQuery.of(context).size.height;
-    double questionFontSize = screenHeight * 0.05; // 5% of screen height
-    double choiceFontSize = screenHeight * 0.035; // 3.5% of screen height
-    double numberFontSize = screenHeight * 0.03; // 3% of screen height
+    double questionFontSize = screenHeight * 0.04; // Reduced from 5%
+    double choiceFontSize = screenHeight * 0.025; // Reduced from 3.5%
+    double numberFontSize = screenHeight * 0.025; // Reduced from 3%
 
     // Define the current question for use in the UI
     final question = _questions[_currentIndex];
@@ -165,37 +165,11 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
       ),
       body: Column(
         children: [
-          // Timer
-          Container(
-            width: double.infinity,
-            padding: EdgeInsets.all(screenHeight * 0.02),
-            color: _remainingSeconds <= 10 ? Colors.red[100] : Colors.blue[50],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.timer,
-                  color: _remainingSeconds <= 10 ? Colors.red : Colors.blue,
-                  size: screenHeight * 0.04,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  _formatTime(_remainingSeconds),
-                  style: TextStyle(
-                    fontSize: screenHeight * 0.04,
-                    fontWeight: FontWeight.bold,
-                    color: _remainingSeconds <= 10 ? Colors.red : Colors.blue,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
           // Main Content Area (Question + Choices)
           Expanded(
             child: Container(
               width: double.infinity,
-              padding: EdgeInsets.all(screenHeight * 0.03),
+              padding: EdgeInsets.all(screenHeight * 0.02),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -210,6 +184,29 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[700],
                         ),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.timer,
+                            color: _remainingSeconds <= 10
+                                ? Colors.red
+                                : Colors.blue,
+                            size: screenHeight * 0.04,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _formatTime(_remainingSeconds),
+                            style: TextStyle(
+                              fontSize: screenHeight * 0.04,
+                              fontWeight: FontWeight.bold,
+                              color: _remainingSeconds <= 10
+                                  ? Colors.red
+                                  : Colors.blue,
+                            ),
+                          ),
+                        ],
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(
@@ -341,13 +338,13 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     final choices = _questionChoices[question.id] ?? [];
     final labels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
-    // 2-Column Grid
+    // 2-Column Grid with fixed row height
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        childAspectRatio: 2.5,
+        mainAxisExtent: fontSize * 3.5, // Fixed height based on font size
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
       ),
@@ -385,7 +382,10 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ), // Small padding
                   child: Text(
                     choice.text,
                     style: TextStyle(
@@ -406,49 +406,52 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
   }
 
   Widget _buildTrueFalseDisplay(double fontSize) {
-    return SizedBox(
-      height: fontSize * 6, // Scale height relative to font
-      child: Row(
-        children: [
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.green[50],
-                border: Border.all(color: Colors.green),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'True',
-                style: TextStyle(
-                  fontSize: fontSize * 2,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.green,
-                ),
+    return Row(
+      children: [
+        Expanded(
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              vertical: fontSize * 0.8,
+            ), // Dynamic padding
+            decoration: BoxDecoration(
+              color: Colors.green[50],
+              border: Border.all(color: Colors.green),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'True',
+              style: TextStyle(
+                fontSize: fontSize * 2,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.red[50],
-                border: Border.all(color: Colors.red),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: Text(
-                'False',
-                style: TextStyle(
-                  fontSize: fontSize * 2,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.red,
-                ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              vertical: fontSize * 0.8,
+            ), // Dynamic padding
+            decoration: BoxDecoration(
+              color: Colors.red[50],
+              border: Border.all(color: Colors.red),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'False',
+              style: TextStyle(
+                fontSize: fontSize * 2,
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
