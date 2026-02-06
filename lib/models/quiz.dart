@@ -32,6 +32,9 @@ class Quiz extends HiveObject {
   @HiveField(8)
   late DateTime updatedAt;
 
+  @HiveField(9)
+  late bool showAnswerKey;
+
   Quiz({
     String? id,
     required this.subjectId,
@@ -40,6 +43,7 @@ class Quiz extends HiveObject {
     this.randomizeQuestions = false,
     this.randomizeChoices = false,
     this.timerSeconds = 60,
+    this.showAnswerKey = true,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {

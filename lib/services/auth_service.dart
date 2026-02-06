@@ -72,6 +72,23 @@ class AuthService extends ChangeNotifier {
     }
   }
 
+  Future<void> updateName(String newName) async {
+    if (_currentUser != null) {
+      _currentUser!.name = newName;
+      await _currentUser!.save();
+      notifyListeners();
+    }
+  }
+
+  Future<void> updatePin(String oldPin, String newPin) async {
+    final storedPin = await _secureStorage.read(key: 'user_pin');
+    if (storedPin == oldPin) {
+      await _secureStorage.write(key: 'user_pin', value: newPin);
+    } else {
+      throw Exception('Incorrect old PIN');
+    }
+  }
+
   void logout() {
     _isAuthenticated = false;
     notifyListeners();

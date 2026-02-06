@@ -49,7 +49,10 @@ class AnswerKeyScreen extends StatelessWidget {
                     icon: const Icon(Icons.check),
                     label: const Text('Done'),
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                     ),
                   ),
                 ],
@@ -76,7 +79,10 @@ class AnswerKeyScreen extends StatelessWidget {
                           Row(
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.blue,
                                   borderRadius: BorderRadius.circular(24),
@@ -92,9 +98,14 @@ class AnswerKeyScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 12),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: _getTypeColor(question.type).withOpacity(0.2),
+                                  color: _getTypeColor(
+                                    question.type,
+                                  ).withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: Text(
@@ -109,7 +120,11 @@ class AnswerKeyScreen extends StatelessWidget {
                               const Spacer(),
                               Row(
                                 children: [
-                                  Icon(Icons.star, size: metaFontSize * 1.5, color: Colors.amber[700]),
+                                  Icon(
+                                    Icons.star,
+                                    size: metaFontSize * 1.5,
+                                    color: Colors.amber[700],
+                                  ),
                                   const SizedBox(width: 6),
                                   Text(
                                     '${question.points} pt${question.points != 1 ? 's' : ''}',
@@ -139,7 +154,8 @@ class AnswerKeyScreen extends StatelessWidget {
                           ],
 
                           // Choices for multiple choice
-                          if (question.type == Question.typeMultipleChoice && choices.isNotEmpty) ...[
+                          if (question.type == Question.typeMultipleChoice &&
+                              choices.isNotEmpty) ...[
                             Text(
                               'Choices:',
                               style: TextStyle(
@@ -167,57 +183,117 @@ class AnswerKeyScreen extends StatelessWidget {
                             SizedBox(height: screenHeight * 0.02),
                           ],
 
-                          // Answer
-                          Container(
-                            padding: EdgeInsets.all(screenHeight * 0.02),
-                            decoration: BoxDecoration(
-                              color: Colors.green[50],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.green, width: 2),
-                            ),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Icon(
-                                  Icons.check_circle,
-                                  color: Colors.green,
-                                  size: answerFontSize * 1.5,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  'Answer: ',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
+                          // Answer(s)
+                          Builder(
+                            builder: (context) {
+                              if (question.type == 'Enumeration') {
+                                // Assume answers are separated by newlines or commas
+                                final answers = question.answer.split(
+                                  RegExp(r'[\n,]'),
+                                );
+                                return Column(
+                                  children: answers.map((ans) {
+                                    if (ans.trim().isEmpty)
+                                      return const SizedBox.shrink();
+                                    return Container(
+                                      margin: EdgeInsets.only(
+                                        bottom: screenHeight * 0.01,
+                                      ),
+                                      padding: EdgeInsets.all(
+                                        screenHeight * 0.02,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: Colors.green,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green,
+                                            size: answerFontSize * 1.5,
+                                          ),
+                                          const SizedBox(width: 12),
+                                          Expanded(
+                                            child: Text(
+                                              ans.trim(),
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: answerFontSize,
+                                                color: Colors.black,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }).toList(),
+                                );
+                              }
+
+                              String displayText = question.answer;
+
+                              if (question.type ==
+                                      Question.typeMultipleChoice &&
+                                  choices.isNotEmpty) {
+                                // Try to match answer with a choice to get the letter
+                                int index = choices.indexWhere(
+                                  (c) =>
+                                      c.text.trim() == question.answer.trim(),
+                                );
+                                if (index != -1 && index < labels.length) {
+                                  displayText =
+                                      '${labels[index]}. ${question.answer}';
+                                }
+                              }
+
+                              return Container(
+                                padding: EdgeInsets.all(screenHeight * 0.02),
+                                decoration: BoxDecoration(
+                                  color: Colors.green[50],
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
                                     color: Colors.green,
-                                    fontSize: answerFontSize,
+                                    width: 2,
                                   ),
                                 ),
-                                Expanded(
-                                  child: Builder(
-                                    builder: (context) {
-                                      String displayText = question.answer;
-                                      
-                                      if (question.type == Question.typeMultipleChoice && choices.isNotEmpty) {
-                                        // Try to match answer with a choice to get the letter
-                                        int index = choices.indexWhere((c) => c.text.trim() == question.answer.trim());
-                                        if (index != -1 && index < labels.length) {
-                                          displayText = '${labels[index]}. ${question.answer}';
-                                        }
-                                      }
-                                      
-                                      return Text(
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Colors.green,
+                                      size: answerFontSize * 1.5,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      'Answer: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.green,
+                                        fontSize: answerFontSize,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
                                         displayText,
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: answerFontSize,
                                           color: Colors.black,
                                         ),
-                                      );
-                                    }
-                                  ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              );
+                            },
                           ),
                         ],
                       ),

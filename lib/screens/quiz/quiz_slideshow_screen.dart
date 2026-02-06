@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
@@ -25,17 +27,34 @@ class QuizSlideshowScreen extends StatefulWidget {
   State<QuizSlideshowScreen> createState() => _QuizSlideshowScreenState();
 }
 
-class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
+class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
+    with TickerProviderStateMixin {
   final HiveService _hiveService = HiveService();
   late List<Question> _questions;
   late Map<String, List<Choice>> _questionChoices;
   int _currentIndex = 0;
   Timer? _timer;
   int _remainingSeconds = 0;
+  bool _showAnswer = false;
+
+  // Animation & Audio
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
     _initializeQuiz();
   }
 
@@ -65,51 +84,86 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
       }
     }
 
-    _startTimer();
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    final question = _questions[_currentIndex];
-    _remainingSeconds = question.timerSeconds ?? widget.quiz.timerSeconds;
-
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() {
-          _remainingSeconds--;
-        });
-      } else {
-        timer.cancel();
-        if (_currentIndex < _questions.length - 1) {
-          _nextQuestion();
-        } else {
-          _finishQuiz();
-        }
-      }
-    });
+    _startQuestion();
   }
 
   @override
   void dispose() {
     _timer?.cancel();
+    _pulseController.dispose();
+    _audioPlayer.dispose();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
-  void _previousQuestion() {
-    if (_currentIndex > 0) {
+  void _playSound(String soundName) async {
+    // try {
+    //   await _audioPlayer.play(AssetSource('sounds/$soundName'));
+    // } catch (e) {
+    //   debugPrint('Error playing sound: $e');
+    // }
+  }
+
+  void _startQuestion() {
+    _showAnswer = false;
+    final question = _questions[_currentIndex];
+    _remainingSeconds = question.timerSeconds ?? widget.quiz.timerSeconds;
+
+    _pulseController.reset();
+    _startTimer();
+    _playSound('next_slide.mp3');
+  }
+
+  void _startTimer() {
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() {
+          _remainingSeconds--;
+        });
+
+        if (_remainingSeconds <= 10) {
+          _playSound('tick.mp3');
+          _pulseController.repeat(reverse: true);
+        }
+      } else {
+        _timer?.cancel();
+        _pulseController.stop();
+        _pulseController.reset();
+        setState(() {
+          _showAnswer = true;
+        });
+      }
+    });
+  }
+
+  void _nextSlide() {
+    if (_showAnswer) {
+      if (_currentIndex < _questions.length - 1) {
+        setState(() {
+          _currentIndex++;
+        });
+        _startQuestion();
+      } else {
+        _finishQuiz();
+      }
+    } else {
       setState(() {
-        _currentIndex--;
-        _startTimer();
+        _showAnswer = true;
       });
+      _timer?.cancel();
+      _pulseController.stop();
+      _pulseController.reset();
     }
   }
 
-  void _nextQuestion() {
-    if (_currentIndex < _questions.length - 1) {
+  void _previousSlide() {
+    if (_currentIndex > 0) {
       setState(() {
-        _currentIndex++;
-        _startTimer();
+        _currentIndex--;
+        _startQuestion();
       });
+      _playSound('prev_slide.mp3');
     }
   }
 
@@ -119,6 +173,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
       context,
       MaterialPageRoute(
         builder: (context) => QuizCompletionScreen(
+          quiz: widget.quiz,
           questions: widget.questions,
           questionChoices: widget.questionChoices,
         ),
@@ -126,211 +181,252 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     );
   }
 
+  String _formatTime(int seconds) {
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+  }
+
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case 'Multiple Choice':
+        return Colors.blue;
+      case 'Identification':
+        return Colors.green;
+      case 'True or False':
+        return Colors.orange;
+      case 'Enumeration':
+        return Colors.purple;
+      default:
+        return Colors.grey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Dynamic sizing helper
-    double screenHeight = MediaQuery.of(context).size.height;
-    double questionFontSize = screenHeight * 0.04; // Reduced from 5%
-    double choiceFontSize = screenHeight * 0.025; // Reduced from 3.5%
-    double numberFontSize = screenHeight * 0.025; // Reduced from 3%
+    if (widget.questions.isEmpty) return const Scaffold();
 
-    // Define the current question for use in the UI
     final question = _questions[_currentIndex];
 
+    // Dynamic sizing helper
+    double screenHeight = MediaQuery.of(context).size.height;
+    double questionFontSize = screenHeight * 0.04;
+    double choiceFontSize = screenHeight * 0.025;
+    double numberFontSize = screenHeight * 0.025;
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.setName != null
-              ? '${widget.quiz.name} - ${widget.setName}'
-              : '${widget.quiz.name} Quiz',
-        ),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.visibility),
-            tooltip: 'Answer Key',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => AnswerKeyScreen(
-                    questions: _questions,
-                    questionChoices: _questionChoices,
-                  ),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Main Content Area (Question + Choices)
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              padding: EdgeInsets.all(screenHeight * 0.02),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Timer Progress Bar
+            LinearProgressIndicator(
+              value: widget.quiz.timerSeconds > 0
+                  ? _remainingSeconds / widget.quiz.timerSeconds
+                  : 0,
+              backgroundColor: Colors.grey[200],
+              valueColor: AlwaysStoppedAnimation<Color>(
+                _remainingSeconds <= 10 ? Colors.red : Colors.blue,
+              ),
+              minHeight: 8,
+            ),
+
+            // Header / Controls
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Header Row: Question Number + Type Badge
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Question ${_currentIndex + 1} of ${_questions.length}',
-                        style: TextStyle(
-                          fontSize: numberFontSize,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.timer,
-                            color: _remainingSeconds <= 10
-                                ? Colors.red
-                                : Colors.blue,
-                            size: screenHeight * 0.04,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _formatTime(_remainingSeconds),
-                            style: TextStyle(
-                              fontSize: screenHeight * 0.04,
-                              fontWeight: FontWeight.bold,
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  AnimatedBuilder(
+                    animation: _pulseAnimation,
+                    builder: (context, child) {
+                      return Transform.scale(
+                        scale: _remainingSeconds <= 10
+                            ? _pulseAnimation.value
+                            : 1.0,
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.timer,
                               color: _remainingSeconds <= 10
                                   ? Colors.red
                                   : Colors.blue,
                             ),
-                          ),
-                        ],
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
+                            const SizedBox(width: 8),
+                            Text(
+                              _formatTime(_remainingSeconds),
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: _remainingSeconds <= 10
+                                    ? Colors.red
+                                    : Colors.blue,
+                              ),
+                            ),
+                          ],
                         ),
-                        decoration: BoxDecoration(
-                          color: _getTypeColor(question.type),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          question.type,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: numberFontSize * 0.6,
-                          ),
-                        ),
-                      ),
-                    ],
+                      );
+                    },
                   ),
-                  SizedBox(height: screenHeight * 0.02),
-
-                  // Question Text Container - Consumes remaining space
-                  Expanded(
-                    child: Container(
-                      alignment: Alignment.center, // Center text vertically
-                      decoration: BoxDecoration(
-                        color: Colors
-                            .grey[50], // Subtle background to show container
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: EdgeInsets.all(screenHeight * 0.02),
-                      child: SingleChildScrollView(
-                        child: Text(
-                          question.questionText,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: questionFontSize,
-                            fontWeight: FontWeight.bold,
-                            height: 1.3,
-                            color: Colors.black,
-                          ),
-                        ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: _getTypeColor(question.type),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Text(
+                      '${_currentIndex + 1} / ${_questions.length}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ),
-                  SizedBox(height: screenHeight * 0.03),
-
-                  // Choices Area
-                  _buildAnswerDisplay(question, choiceFontSize),
                 ],
               ),
             ),
-          ),
 
-          // Navigation buttons ...
+            // Main Content Area (Question + Choices)
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(screenHeight * 0.02),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Question Box
+                    Expanded(
+                      flex: 2,
+                      child: Center(
+                        child: SingleChildScrollView(
+                          child: Text(
+                            question.questionText,
+                            style: TextStyle(
+                              fontSize: questionFontSize,
+                              fontWeight: FontWeight.bold,
+                              height: 1.3,
+                              color: Colors.black87,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ),
 
-          // Navigation buttons
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, -2),
+                    SizedBox(height: screenHeight * 0.02),
+
+                    // Choices Area
+                    Expanded(
+                      flex: 3,
+                      child: _showAnswer
+                          ? _buildAnswerDisplay(question, screenHeight * 0.035)
+                          : _buildChoicesForType(question, choiceFontSize),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-            child: Row(
-              children: [
-                if (_currentIndex > 0)
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: _previousQuestion,
+
+            // Bottom Controls
+            Container(
+              padding: const EdgeInsets.all(16),
+              color: Colors.grey[100],
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Answer Key Button (Left side)
+                  if (widget.quiz.showAnswerKey)
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AnswerKeyScreen(
+                              questions: _questions,
+                              questionChoices: _questionChoices,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.vpn_key),
+                      label: const Text('Key'),
+                    )
+                  else
+                    const SizedBox(width: 80),
+
+                  // Previous
+                  if (_currentIndex > 0)
+                    ElevatedButton.icon(
+                      onPressed: _previousSlide,
                       icon: const Icon(Icons.arrow_back),
-                      label: const Text('Previous'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.all(16),
+                      label: const Text('Prev'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+
+                  // Next / Show Answer
+                  ElevatedButton.icon(
+                    onPressed: _nextSlide,
+                    icon: Icon(_showAnswer ? Icons.arrow_forward : Icons.check),
+                    label: Text(
+                      _showAnswer
+                          ? (_currentIndex == _questions.length - 1
+                                ? 'Finish'
+                                : 'Next')
+                          : 'Show Answer',
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).primaryColor,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 32,
+                        vertical: 16,
                       ),
                     ),
                   ),
-                if (_currentIndex > 0) const SizedBox(width: 16),
-                Expanded(
-                  child: FilledButton.icon(
-                    onPressed: _currentIndex < _questions.length - 1
-                        ? _nextQuestion
-                        : _finishQuiz,
-                    icon: Icon(
-                      _currentIndex < _questions.length - 1
-                          ? Icons.arrow_forward
-                          : Icons.check,
-                    ),
-                    label: Text(
-                      _currentIndex < _questions.length - 1 ? 'Next' : 'Finish',
-                    ),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.all(16),
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildAnswerDisplay(Question question, double fontSize) {
-    // Return widget that fits in the layout below question
+  Widget _buildChoicesForType(Question question, double fontSize) {
     switch (question.type) {
-      case 'Multiple Choice':
+      case Question.typeMultipleChoice:
         return _buildMultipleChoiceDisplay(question, fontSize);
-      case 'True or False':
+      case Question.typeTrueFalse:
         return _buildTrueFalseDisplay(fontSize);
-      case 'Identification':
-        return _buildIdentificationDisplay(question);
-      case 'Enumeration':
-        return _buildEnumerationDisplay(fontSize);
+      case Question.typeIdentification:
+      case Question.typeEnumeration:
       default:
-        return const SizedBox();
+        return Center(
+          child: Text(
+            'Check your answer...',
+            style: TextStyle(
+              fontSize: fontSize * 1.5,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        );
     }
   }
 
@@ -455,55 +551,94 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen> {
     );
   }
 
-  Widget _buildIdentificationDisplay(Question question) {
-    // User requested empty/minimal display for Identification?
-    return const SizedBox();
-  }
-
-  Widget _buildEnumerationDisplay(double fontSize) {
-    return Container(
-      padding: EdgeInsets.all(fontSize),
-      decoration: BoxDecoration(
-        color: Colors.purple[50],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.format_list_numbered,
-            color: Colors.purple,
-            size: fontSize * 2,
-          ),
-          SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Students will provide multiple answers',
-              style: TextStyle(fontWeight: FontWeight.w500, fontSize: fontSize),
+  Widget _buildAnswerDisplay(Question question, double fontSize) {
+    if (question.type == 'Enumeration') {
+      final answers = question.answer.split(RegExp(r'[\n,]'));
+      return ListView(
+        children: answers.map((ans) {
+          if (ans.trim().isEmpty) return const SizedBox.shrink();
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.green,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.3),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-          ),
-        ],
+            alignment: Alignment.center,
+            child: Text(
+              ans.trim(),
+              style: TextStyle(
+                fontSize: fontSize,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          );
+        }).toList(),
+      );
+    }
+
+    String displayAnswer = question.answer;
+
+    if (question.type == Question.typeMultipleChoice) {
+      final choices = _questionChoices[question.id] ?? [];
+      final labels = ['A', 'B', 'C', 'D', 'E', 'F'];
+      try {
+        final matchIndex = choices.indexWhere((c) => c.text == question.answer);
+        if (matchIndex != -1) {
+          displayAnswer = '${labels[matchIndex]}. ${question.answer}';
+        }
+      } catch (e) {
+        // Fallback to just answer text
+      }
+    }
+
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.green,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.green.withOpacity(0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Correct Answer:',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 18,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              displayAnswer,
+              style: TextStyle(
+                fontSize: fontSize * 1.5,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
-  }
-
-  String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${minutes.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}';
-  }
-
-  Color _getTypeColor(String type) {
-    switch (type) {
-      case 'Multiple Choice':
-        return Colors.blue;
-      case 'Identification':
-        return Colors.green;
-      case 'True or False':
-        return Colors.orange;
-      case 'Enumeration':
-        return Colors.purple;
-      default:
-        return Colors.grey;
-    }
   }
 }
