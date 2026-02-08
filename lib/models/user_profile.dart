@@ -7,15 +7,8 @@ class UserProfile extends HiveObject {
   @HiveField(0)
   String name;
 
-  @HiveField(1)
-  bool useBiometrics;
-
   @HiveField(2)
   bool hasPin;
 
-  UserProfile({
-    required this.name,
-    this.useBiometrics = false,
-    this.hasPin = false,
-  });
+  UserProfile({required this.name, this.hasPin = false});
 }

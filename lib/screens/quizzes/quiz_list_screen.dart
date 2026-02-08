@@ -139,7 +139,7 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 return Card(
                   clipBehavior: Clip.antiAlias,
                   child: InkWell(
-                    onTap: () => _playQuiz(quiz),
+                    onTap: () => _navigateToQuestions(quiz),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -255,6 +255,10 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 );
               },
             ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToForm,
+        child: const Icon(Icons.add),
+      ),
     );
   }
 

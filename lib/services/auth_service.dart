@@ -1,12 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive/hive.dart';
-import 'package:local_auth/local_auth.dart';
 import 'package:slidequiz/models/user_profile.dart';
 
 class AuthService extends ChangeNotifier {
   final _secureStorage = const FlutterSecureStorage();
-  final _localAuth = LocalAuthentication();
 
   UserProfile? _currentUser;
   bool _isAuthenticated = false;
@@ -24,14 +22,10 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  Future<void> createUser(String name, String pin, bool useBiometrics) async {
+  Future<void> createUser(String name, String pin) async {
     await _secureStorage.write(key: 'user_pin', value: pin);
 
-    final profile = UserProfile(
-      name: name,
-      useBiometrics: useBiometrics,
-      hasPin: true,
-    );
+    final profile = UserProfile(name: name, hasPin: true);
 
     var box = await Hive.openBox<UserProfile>('user_profile');
     await box.clear();
@@ -50,26 +44,6 @@ class AuthService extends ChangeNotifier {
       return true;
     }
     return false;
-  }
-
-  Future<bool> authenticateWithBiometrics() async {
-    try {
-      if (!await _localAuth.canCheckBiometrics) return false;
-
-      final bool didAuthenticate = await _localAuth.authenticate(
-        localizedReason: 'Please authenticate to access SlideQuiz',
-        biometricOnly: true,
-      );
-
-      if (didAuthenticate) {
-        _isAuthenticated = true;
-        notifyListeners();
-      }
-      return didAuthenticate;
-    } catch (e) {
-      debugPrint('Biometric auth error: $e');
-      return false;
-    }
   }
 
   Future<void> updateName(String newName) async {

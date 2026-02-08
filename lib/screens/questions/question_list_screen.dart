@@ -6,7 +6,6 @@ import 'package:slidequiz/screens/questions/question_form_screen.dart';
 import 'package:slidequiz/models/quiz_set.dart';
 import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 import 'package:uuid/uuid.dart';
-import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
 import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuestionListScreen extends StatefulWidget {
@@ -58,9 +57,9 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
       await _hiveService.deleteQuestion(question.id);
       _loadQuestions();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Question deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Question deleted')));
       }
     }
   }
@@ -69,10 +68,8 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
     final result = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => QuestionFormScreen(
-          quiz: widget.quiz,
-          question: question,
-        ),
+        builder: (context) =>
+            QuestionFormScreen(quiz: widget.quiz, question: question),
       ),
     );
 
@@ -110,7 +107,10 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                       leading: const Icon(Icons.add_circle, color: Colors.blue),
                       title: const Text(
                         'Generate New Set',
-                        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                        ),
                       ),
                       subtitle: const Text('Create a new randomized order'),
                       onTap: () async {
@@ -127,42 +127,51 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                       ),
-                      ...sets.map((set) => ListTile(
-                        leading: const Icon(Icons.folder_outlined),
-                        title: Text(set.name),
-                        subtitle: Text('${set.questionOrder.length} Questions'),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _launchQuizWithSet(set);
-                        },
-                        trailing: IconButton(
-                          icon: const Icon(Icons.delete, color: Colors.red),
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete Set'),
-                                content: Text('Delete set "${set.name}"?'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                  ),
-                                ],
-                              ),
-                            );
-                            
-                            if (confirm == true) {
-                              await _hiveService.deleteQuizSet(set.id);
-                              setStateDialog(() {});
-                            }
+                      ...sets.map(
+                        (set) => ListTile(
+                          leading: const Icon(Icons.folder_outlined),
+                          title: Text(set.name),
+                          subtitle: Text(
+                            '${set.questionOrder.length} Questions',
+                          ),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _launchQuizWithSet(set);
                           },
+                          trailing: IconButton(
+                            icon: const Icon(Icons.delete, color: Colors.red),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text('Delete Set'),
+                                  content: Text('Delete set "${set.name}"?'),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: const Text(
+                                        'Delete',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+
+                              if (confirm == true) {
+                                await _hiveService.deleteQuizSet(set.id);
+                                setStateDialog(() {});
+                              }
+                            },
+                          ),
                         ),
-                      )),
+                      ),
                     ],
                   ],
                 ),
@@ -224,21 +233,22 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
     // 2. Randomize Choices
     final choiceOrders = <String, List<String>>{};
-    
+
     for (var question in questions) {
-      if (question.type == Question.typeMultipleChoice || 
-          question.type == Question.typeIdentification) { // Identify also has choices in this app? Check model.
-          // Assuming choices are relevant to be stored for consistency
-          final choices = _hiveService.getChoicesByQuestion(question.id);
-          if (widget.quiz.randomizeChoices) {
-            choices.shuffle();
-          }
-          choiceOrders[question.id] = choices.map((c) => c.id).toList();
+      if (question.type == Question.typeMultipleChoice ||
+          question.type == Question.typeIdentification) {
+        // Identify also has choices in this app? Check model.
+        // Assuming choices are relevant to be stored for consistency
+        final choices = _hiveService.getChoicesByQuestion(question.id);
+        if (widget.quiz.randomizeChoices) {
+          choices.shuffle();
+        }
+        choiceOrders[question.id] = choices.map((c) => c.id).toList();
       }
     }
 
     // 3. Create QuizSet
-    final setId =const Uuid().v4();
+    final setId = const Uuid().v4();
     final set = QuizSet(
       id: setId,
       quizId: widget.quiz.id,
@@ -254,37 +264,35 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
   }
 
   void _launchQuizWithSet(QuizSet quizSet) {
-      final questions = quizSet.questionOrder
-          .map((id) => _hiveService.getQuestion(id))
-          .whereType<Question>()
-          .toList();
+    final questions = quizSet.questionOrder
+        .map((id) => _hiveService.getQuestion(id))
+        .whereType<Question>()
+        .toList();
 
-      final Map<String, List<dynamic>> questionChoices = {};
-      for (var questionId in quizSet.questionOrder) {
-        if (quizSet.choiceOrders.containsKey(questionId)) {
-          final choiceIds = quizSet.choiceOrders[questionId]!;
-          final choices = choiceIds
-              .map((id) => _hiveService.getChoice(id))
-              .whereType<dynamic>()
-              .toList();
-          questionChoices[questionId] = choices;
-        }
+    final Map<String, List<dynamic>> questionChoices = {};
+    for (var questionId in quizSet.questionOrder) {
+      if (quizSet.choiceOrders.containsKey(questionId)) {
+        final choiceIds = quizSet.choiceOrders[questionId]!;
+        final choices = choiceIds
+            .map((id) => _hiveService.getChoice(id))
+            .whereType<dynamic>()
+            .toList();
+        questionChoices[questionId] = choices;
       }
+    }
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => QuizIntroScreen(
-            quiz: widget.quiz,
-            questions: questions,
-            questionChoices: questionChoices.map((k, v) => MapEntry(k, v.cast())),
-            setName: quizSet.name,
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QuizIntroScreen(
+          quiz: widget.quiz,
+          questions: questions,
+          questionChoices: questionChoices.map((k, v) => MapEntry(k, v.cast())),
+          setName: quizSet.name,
         ),
-      );
+      ),
+    );
   }
-
-
 
   Color _getTypeColor(String type) {
     switch (type) {
@@ -313,26 +321,16 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.help_outline,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.help_outline, size: 80, color: Colors.grey[400]),
                   const SizedBox(height: 16),
                   Text(
                     'No questions yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap + to add your first question',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],
               ),
@@ -364,9 +362,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                       question.questionText,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     subtitle: Padding(
                       padding: const EdgeInsets.only(top: 8),
@@ -378,7 +374,9 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: _getTypeColor(question.type).withOpacity(0.2),
+                              color: _getTypeColor(
+                                question.type,
+                              ).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -399,7 +397,11 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                           ),
                           if (question.timerSeconds != null) ...[
                             const SizedBox(width: 8),
-                            const Icon(Icons.timer, size: 14, color: Colors.grey),
+                            const Icon(
+                              Icons.timer,
+                              size: 14,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${question.timerSeconds}s',
@@ -427,7 +429,10 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                             children: [
                               Icon(Icons.delete, color: Colors.red),
                               SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ],
                           ),
                         ),

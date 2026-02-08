@@ -162,10 +162,9 @@ class _SubjectGridState extends State<SubjectGrid> {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    if (subject.description != null &&
-                        subject.description!.isNotEmpty)
+                    if (subject.description.isNotEmpty)
                       Text(
-                        subject.description!,
+                        subject.description,
                         style: TextStyle(color: Colors.grey[600], fontSize: 12),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,

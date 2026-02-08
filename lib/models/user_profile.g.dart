@@ -18,7 +18,6 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
     };
     return UserProfile(
       name: fields[0] as String,
-      useBiometrics: fields[1] as bool,
       hasPin: fields[2] as bool,
     );
   }
@@ -26,11 +25,9 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(2)
       ..writeByte(0)
       ..write(obj.name)
-      ..writeByte(1)
-      ..write(obj.useBiometrics)
       ..writeByte(2)
       ..write(obj.hasPin);
   }

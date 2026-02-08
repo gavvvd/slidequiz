@@ -193,8 +193,9 @@ class AnswerKeyScreen extends StatelessWidget {
                                 );
                                 return Column(
                                   children: answers.map((ans) {
-                                    if (ans.trim().isEmpty)
+                                    if (ans.trim().isEmpty) {
                                       return const SizedBox.shrink();
+                                    }
                                     return Container(
                                       margin: EdgeInsets.only(
                                         bottom: screenHeight * 0.01,
