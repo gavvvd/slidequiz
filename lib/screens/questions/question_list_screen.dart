@@ -268,9 +268,10 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
   Future<void> _downloadTemplate() async {
     const csvHeader =
-        'TYPE,QUESTION,CHOICE_A,CHOICE_B,CHOICE_C,CHOICE_D,CHOICE_E,CHOICE_F,ANSWER,TIMER\n'
-        'Multiple Choice,Example Question,Option A,Option B,,,,Option A,30';
-
+        '"TYPE","QUESTION","CHOICE_A","CHOICE_B","CHOICE_C","CHOICE_D","CHOICE_E","CHOICE_F","ANSWER","TIMER"\n'
+        '"Multiple Choice","Example Question","Option A","Option B","Option C","Option D","Option E","Option F","Option A <Must be in the answer field>","30 <in seconds>"\n'
+        '"Identification","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>"\n'
+        '"True or False","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>"\n';
     try {
       final String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save CSV Template',
