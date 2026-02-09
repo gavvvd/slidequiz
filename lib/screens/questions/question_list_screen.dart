@@ -7,6 +7,9 @@ import 'package:slidequiz/models/quiz_set.dart';
 import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 import 'package:uuid/uuid.dart';
 import 'package:slidequiz/widgets/copyright_footer.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:slidequiz/services/csv_import_service.dart';
 
 class QuestionListScreen extends StatefulWidget {
   final Quiz quiz;
@@ -263,6 +266,113 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
     return set;
   }
 
+  Future<void> _downloadTemplate() async {
+    const csvHeader =
+        'TYPE,QUESTION,CHOICE_A,CHOICE_B,CHOICE_C,CHOICE_D,CHOICE_E,CHOICE_F,ANSWER,TIMER\n'
+        'Multiple Choice,Example Question,Option A,Option B,,,,Option A,30';
+
+    try {
+      final String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Save CSV Template',
+        fileName: 'quiz_template.csv',
+        allowedExtensions: ['csv'],
+        type: FileType.custom,
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsString(csvHeader);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Template saved to $outputFile')),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving template: $e')));
+      }
+    }
+  }
+
+  Future<void> _importQuestions() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['csv'],
+      );
+
+      if (result != null) {
+        final file = File(result.files.single.path!);
+        final csvString = await file.readAsString();
+
+        final importService = CsvImportService();
+        final importResult = await importService.importQuestions(
+          csvString,
+          widget.quiz.id,
+        );
+
+        if (importResult.hasErrors) {
+          if (mounted) {
+            _showErrorDialog(importResult.errors);
+          }
+        } else {
+          int count = 0;
+          for (var q in importResult.questions) {
+            await _hiveService.addQuestion(q);
+            count++;
+          }
+
+          // Add choices
+          for (var c in importResult.choices) {
+            await _hiveService.addChoice(c);
+          }
+
+          _loadQuestions();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Successfully imported $count questions')),
+            );
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error importing CSV: $e')));
+      }
+    }
+  }
+
+  void _showErrorDialog(List<String> errors) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Import Errors'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: errors.length,
+            itemBuilder: (context, index) => ListTile(
+              leading: const Icon(Icons.error, color: Colors.red),
+              title: Text(errors[index]),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _launchQuizWithSet(QuizSet quizSet) {
     final questions = quizSet.questionOrder
         .map((id) => _hiveService.getQuestion(id))
@@ -315,6 +425,41 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
       appBar: AppBar(
         title: Text(widget.quiz.name),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'import') {
+                _importQuestions();
+              } else if (value == 'template') {
+                _downloadTemplate();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                const PopupMenuItem<String>(
+                  value: 'import',
+                  child: Row(
+                    children: [
+                      Icon(Icons.upload_file),
+                      SizedBox(width: 8),
+                      Text('Import CSV'),
+                    ],
+                  ),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'template',
+                  child: Row(
+                    children: [
+                      Icon(Icons.download),
+                      SizedBox(width: 8),
+                      Text('Download Template'),
+                    ],
+                  ),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: _questions.isEmpty
           ? Center(
