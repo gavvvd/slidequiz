@@ -297,70 +297,64 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(screenHeight * 0.02),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Question Box
-                    Expanded(
-                      flex: 2,
-                      child: Center(
-                        child: SingleChildScrollView(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                decoration: BoxDecoration(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Question Box
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: _getTypeColor(
+                                  question.type,
+                                ).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
                                   color: _getTypeColor(
                                     question.type,
-                                  ).withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: _getTypeColor(
-                                      question.type,
-                                    ).withOpacity(0.5),
-                                  ),
-                                ),
-                                child: Text(
-                                  question.type.toUpperCase(),
-                                  style: TextStyle(
-                                    color: _getTypeColor(question.type),
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    letterSpacing: 1.2,
-                                  ),
+                                  ).withOpacity(0.5),
                                 ),
                               ),
-                              const SizedBox(height: 24),
-                              Text(
-                                question.questionText,
+                              child: Text(
+                                question.type.toUpperCase(),
                                 style: TextStyle(
-                                  fontSize: questionFontSize * 1.2,
-                                  fontWeight: FontWeight.w900,
-                                  height: 1.2,
-                                  color: Colors.black,
+                                  color: _getTypeColor(question.type),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  letterSpacing: 1.2,
                                 ),
-                                textAlign: TextAlign.center,
                               ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              question.questionText,
+                              style: TextStyle(
+                                fontSize: questionFontSize * 1.2,
+                                fontWeight: FontWeight.w900,
+                                height: 1.2,
+                                color: Colors.black,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
                         ),
                       ),
-                    ),
 
-                    SizedBox(height: screenHeight * 0.02),
+                      SizedBox(height: screenHeight * 0.05),
 
-                    // Choices Area
-                    Expanded(
-                      flex: 3,
-                      child: _showAnswer
+                      // Choices Area
+                      _showAnswer
                           ? _buildAnswerDisplay(question, screenHeight * 0.035)
                           : _buildChoicesForType(question, choiceFontSize),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -591,6 +585,8 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
     if (question.type == 'Enumeration') {
       final answers = question.answer.split(RegExp(r'[\n,]'));
       return ListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
         children: answers.map((ans) {
           if (ans.trim().isEmpty) return const SizedBox.shrink();
           return Container(
