@@ -127,18 +127,19 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
   }
 
   void _startQuestionSequence() {
-    setState(() {
-      _showSplash = true;
-    });
+    _startActualQuestion();
+    // setState(() {
+    //   _showSplash = true;
+    // });
 
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _showSplash = false;
-        });
-        _startActualQuestion();
-      }
-    });
+    // Future.delayed(const Duration(seconds: 2), () {
+    //   if (mounted) {
+    //     setState(() {
+    //       _showSplash = false;
+    //     });
+    //     _startActualQuestion();
+    //   }
+    // });
   }
 
   void _startActualQuestion() {
