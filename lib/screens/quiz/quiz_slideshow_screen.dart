@@ -233,36 +233,42 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
                     icon: const Icon(Icons.close),
                     onPressed: () => Navigator.pop(context),
                   ),
-                  AnimatedBuilder(
-                    animation: _pulseAnimation,
-                    builder: (context, child) {
-                      return Transform.scale(
-                        scale: _remainingSeconds <= 10
-                            ? _pulseAnimation.value
-                            : 1.0,
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.timer,
-                              color: _remainingSeconds <= 10
-                                  ? Colors.red
-                                  : Colors.blue,
+                  Expanded(
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _pulseAnimation,
+                        builder: (context, child) {
+                          return Transform.scale(
+                            scale: _remainingSeconds <= 10
+                                ? _pulseAnimation.value
+                                : 1.0,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.timer,
+                                  size: 40,
+                                  color: _remainingSeconds <= 10
+                                      ? Colors.red
+                                      : Colors.blue,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  _formatTime(_remainingSeconds),
+                                  style: TextStyle(
+                                    fontSize: 48,
+                                    fontWeight: FontWeight.bold,
+                                    color: _remainingSeconds <= 10
+                                        ? Colors.red
+                                        : Colors.blue,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const SizedBox(width: 8),
-                            Text(
-                              _formatTime(_remainingSeconds),
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: _remainingSeconds <= 10
-                                    ? Colors.red
-                                    : Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                          );
+                        },
+                      ),
+                    ),
                   ),
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -299,15 +305,47 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
                       flex: 2,
                       child: Center(
                         child: SingleChildScrollView(
-                          child: Text(
-                            question.questionText,
-                            style: TextStyle(
-                              fontSize: questionFontSize,
-                              fontWeight: FontWeight.bold,
-                              height: 1.3,
-                              color: Colors.black87,
-                            ),
-                            textAlign: TextAlign.center,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getTypeColor(
+                                    question.type,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: _getTypeColor(
+                                      question.type,
+                                    ).withOpacity(0.5),
+                                  ),
+                                ),
+                                child: Text(
+                                  question.type.toUpperCase(),
+                                  style: TextStyle(
+                                    color: _getTypeColor(question.type),
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    letterSpacing: 1.2,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 24),
+                              Text(
+                                question.questionText,
+                                style: TextStyle(
+                                  fontSize: questionFontSize * 1.2,
+                                  fontWeight: FontWeight.w900,
+                                  height: 1.2,
+                                  color: Colors.black,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -411,7 +449,7 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
       default:
         return Center(
           child: Text(
-            'Check your answer...',
+            'Provide the answer',
             style: TextStyle(
               fontSize: fontSize * 1.5,
               color: Colors.grey,
@@ -427,66 +465,72 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
     final labels = ['A', 'B', 'C', 'D', 'E', 'F'];
 
     // 2-Column Grid with fixed row height
-    return GridView.builder(
+    // List View for choices
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisExtent: fontSize * 3.5, // Fixed height based on font size
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-      ),
       itemCount: choices.length,
       itemBuilder: (context, index) {
         final choice = choices[index];
         final displayLabel = labels[index];
 
         return Container(
+          margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: Colors.grey[300]!),
             borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: fontSize * 3, // Proportional width for letter box
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(12),
-                    bottomLeft: Radius.circular(12),
-                  ),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  displayLabel,
-                  style: TextStyle(
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: fontSize * 1.5,
-                  ),
-                ),
-              ),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ), // Small padding
-                  child: Text(
-                    choice.text,
-                    style: TextStyle(
-                      fontSize: fontSize,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black87,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
               ),
             ],
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: () {
+                // Choice selection logic would go here if interactive
+              },
+              child: Padding(
+                padding: EdgeInsets.all(fontSize * 0.8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: fontSize * 2.5,
+                      height: fontSize * 2.5,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        displayLabel,
+                        style: TextStyle(
+                          color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: fontSize * 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Text(
+                        choice.text,
+                        style: TextStyle(
+                          fontSize: fontSize,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         );
       },

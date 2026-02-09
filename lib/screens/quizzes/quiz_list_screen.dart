@@ -5,7 +5,6 @@ import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quizzes/quiz_form_screen.dart';
 import 'package:slidequiz/screens/questions/question_list_screen.dart';
 import 'package:slidequiz/screens/quiz_sets/quiz_set_list_screen.dart';
-import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 
 class QuizListScreen extends StatefulWidget {
   final Subject subject;
@@ -119,14 +118,8 @@ class _QuizListScreenState extends State<QuizListScreen> {
                 ],
               ),
             )
-          : GridView.builder(
+          : ListView.builder(
               padding: const EdgeInsets.all(16),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 300,
-                childAspectRatio: 3 / 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-              ),
               itemCount: _quizzes.length,
               itemBuilder: (context, index) {
                 final quiz = _quizzes[index];
@@ -134,120 +127,130 @@ class _QuizListScreenState extends State<QuizListScreen> {
                     .getQuestionsByQuiz(quiz.id)
                     .length;
 
-                return Card(
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () => _navigateToQuestions(quiz),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          leading: CircleAvatar(
-                            backgroundColor: Theme.of(
-                              context,
-                            ).colorScheme.primary,
-                            child: const Icon(Icons.quiz, color: Colors.white),
-                          ),
-                          title: Text(
-                            quiz.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Card(
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () => _navigateToQuestions(quiz),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ListTile(
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            leading: CircleAvatar(
+                              backgroundColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              child: const Icon(
+                                Icons.quiz,
+                                color: Colors.white,
+                              ),
+                            ),
+                            title: Text(
+                              quiz.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            trailing: PopupMenuButton(
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: Text('Edit'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'questions',
+                                  child: Text('Questions'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'sets',
+                                  child: Text('Saved Sets'),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: Text('Delete'),
+                                ),
+                              ],
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _editQuiz(quiz);
+                                } else if (value == 'questions') {
+                                  _navigateToQuestions(quiz);
+                                } else if (value == 'sets') {
+                                  _navigateToSets(quiz);
+                                } else if (value == 'delete') {
+                                  _deleteQuiz(quiz);
+                                }
+                              },
                             ),
                           ),
-                          trailing: PopupMenuButton(
-                            itemBuilder: (context) => [
-                              const PopupMenuItem(
-                                value: 'edit',
-                                child: Text('Edit'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'questions',
-                                child: Text('Questions'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'sets',
-                                child: Text('Saved Sets'),
-                              ),
-                              const PopupMenuItem(
-                                value: 'delete',
-                                child: Text('Delete'),
-                              ),
-                            ],
-                            onSelected: (value) {
-                              if (value == 'edit') {
-                                _editQuiz(quiz);
-                              } else if (value == 'questions') {
-                                _navigateToQuestions(quiz);
-                              } else if (value == 'sets') {
-                                _navigateToSets(quiz);
-                              } else if (value == 'delete') {
-                                _deleteQuiz(quiz);
-                              }
-                            },
-                          ),
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                quiz.description.isNotEmpty
-                                    ? quiz.description
-                                    : 'No description',
-                                maxLines: 2,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey[600],
-                                  fontStyle: quiz.description.isEmpty
-                                      ? FontStyle.italic
-                                      : FontStyle.normal,
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16,
+                              right: 16,
+                              bottom: 16,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  quiz.description.isNotEmpty
+                                      ? quiz.description
+                                      : 'No description',
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[600],
+                                    fontStyle: quiz.description.isEmpty
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 12),
-                              Row(
-                                children: [
-                                  Icon(
-                                    Icons.help_outline,
-                                    size: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '$questionCount Qs',
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                const SizedBox(height: 12),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.help_outline,
+                                      size: 16,
                                       color: Colors.grey[600],
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Icon(
-                                    Icons.timer,
-                                    size: 16,
-                                    color: Colors.grey[600],
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${quiz.timerSeconds}s',
-                                    style: TextStyle(
-                                      fontSize: 12,
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '$questionCount Qs',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.timer,
+                                      size: 16,
                                       color: Colors.grey[600],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${quiz.timerSeconds}s',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 );
@@ -256,23 +259,6 @@ class _QuizListScreenState extends State<QuizListScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: _navigateToForm,
         child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  void _playQuiz(Quiz quiz) {
-    final questions = _hiveService.getQuestionsByQuiz(quiz.id);
-    if (questions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No questions in this quiz!')),
-      );
-      return;
-    }
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => QuizIntroScreen(quiz: quiz, questions: questions),
       ),
     );
   }
