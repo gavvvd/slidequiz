@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive/hive.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:slidequiz/models/user_profile.dart';
 
 class AuthService extends ChangeNotifier {
@@ -23,7 +25,12 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> createUser(String name, String pin) async {
-    await _secureStorage.write(key: 'user_pin', value: pin);
+    if (Platform.isMacOS) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('user_pin', pin);
+    } else {
+      await _secureStorage.write(key: 'user_pin', value: pin);
+    }
 
     final profile = UserProfile(name: name, hasPin: true);
 
@@ -37,7 +44,13 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<bool> verifyPin(String pin) async {
-    final storedPin = await _secureStorage.read(key: 'user_pin');
+    String? storedPin;
+    if (Platform.isMacOS) {
+      final prefs = await SharedPreferences.getInstance();
+      storedPin = prefs.getString('user_pin');
+    } else {
+      storedPin = await _secureStorage.read(key: 'user_pin');
+    }
     if (storedPin == pin) {
       _isAuthenticated = true;
       notifyListeners();
@@ -55,9 +68,21 @@ class AuthService extends ChangeNotifier {
   }
 
   Future<void> updatePin(String oldPin, String newPin) async {
-    final storedPin = await _secureStorage.read(key: 'user_pin');
+    String? storedPin;
+    if (Platform.isMacOS) {
+      final prefs = await SharedPreferences.getInstance();
+      storedPin = prefs.getString('user_pin');
+    } else {
+      storedPin = await _secureStorage.read(key: 'user_pin');
+    }
+
     if (storedPin == oldPin) {
-      await _secureStorage.write(key: 'user_pin', value: newPin);
+      if (Platform.isMacOS) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('user_pin', newPin);
+      } else {
+        await _secureStorage.write(key: 'user_pin', value: newPin);
+      }
     } else {
       throw Exception('Incorrect old PIN');
     }
