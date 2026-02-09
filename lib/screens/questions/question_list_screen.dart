@@ -4,6 +4,7 @@ import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/questions/question_form_screen.dart';
+import 'package:slidequiz/screens/quizzes/quiz_form_screen.dart';
 import 'package:slidequiz/models/quiz_set.dart';
 import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 import 'package:uuid/uuid.dart';
@@ -78,6 +79,29 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
     if (result == true) {
       _loadQuestions();
+    }
+  }
+
+  Future<void> _editQuiz() async {
+    final subject = _hiveService.getSubject(widget.quiz.subjectId);
+    if (subject == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Error: Subject not found')));
+      return;
+    }
+
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>
+            QuizFormScreen(subject: subject, quiz: widget.quiz),
+      ),
+    );
+
+    if (result == true && mounted) {
+      // Refresh the app bar title if quiz was edited
+      setState(() {});
     }
   }
 
@@ -268,10 +292,10 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
 
   Future<void> _downloadTemplate() async {
     const csvHeader =
-        '"TYPE","QUESTION","CHOICE_A","CHOICE_B","CHOICE_C","CHOICE_D","CHOICE_E","CHOICE_F","ANSWER","TIMER"\n'
-        '"Multiple Choice","Example Question","Option A","Option B","Option C","Option D","Option E","Option F","Option A <Must be in the answer field>","30 <in seconds>"\n'
-        '"Identification","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>"\n'
-        '"True or False","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>"\n';
+        '"TYPE","QUESTION","CHOICE_A","CHOICE_B","CHOICE_C","CHOICE_D","CHOICE_E","CHOICE_F","ANSWER","TIMER","POINTS"\n'
+        '"Multiple Choice","Example Question","Option A","Option B","Option C","Option D","Option E","Option F","Option A <Must be in the answer field>","30 <in seconds>","1"\n'
+        '"Identification","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>","1"\n'
+        '"True or False","Example Question","<required if multiple choice>","<required if multiple choice>","","","","","","30 <in seconds remove if you will use the quiz timer as default time>","1"\n';
     try {
       final String? outputFile = await FilePicker.platform.saveFile(
         dialogTitle: 'Save CSV Template',
@@ -332,6 +356,72 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
         ).showSnackBar(SnackBar(content: Text('Error importing CSV: $e')));
       }
     }
+  }
+
+  Future<void> _exportQuestions() async {
+    try {
+      // Build CSV content
+      final buffer = StringBuffer();
+      // Header
+      buffer.writeln(
+        '"TYPE","QUESTION","CHOICE_A","CHOICE_B","CHOICE_C","CHOICE_D","CHOICE_E","CHOICE_F","ANSWER","TIMER","POINTS"',
+      );
+
+      for (var question in _questions) {
+        final type = _escapeCsv(question.type);
+        final questionText = _escapeCsv(question.questionText);
+        final answer = _escapeCsv(question.answer);
+        final timer = question.timerSeconds?.toString() ?? '';
+        final points = question.points.toString();
+
+        // Get choices for multiple choice questions
+        List<String> choiceTexts = ['', '', '', '', '', ''];
+        if (question.type == Question.typeMultipleChoice) {
+          final choices = _hiveService.getChoicesByQuestion(question.id);
+          for (int i = 0; i < choices.length && i < 6; i++) {
+            choiceTexts[i] = _escapeCsv(choices[i].text);
+          }
+        }
+
+        buffer.writeln(
+          '$type,$questionText,${choiceTexts[0]},${choiceTexts[1]},${choiceTexts[2]},${choiceTexts[3]},${choiceTexts[4]},${choiceTexts[5]},$answer,$timer,$points',
+        );
+      }
+
+      // Save file
+      final String? outputFile = await FilePicker.platform.saveFile(
+        dialogTitle: 'Export Questions as CSV',
+        fileName: '${widget.quiz.name.replaceAll(' ', '_')}_questions.csv',
+        allowedExtensions: ['csv'],
+        type: FileType.custom,
+      );
+
+      if (outputFile != null) {
+        final file = File(outputFile);
+        await file.writeAsString(buffer.toString());
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Exported ${_questions.length} questions to $outputFile',
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error exporting CSV: $e')));
+      }
+    }
+  }
+
+  String _escapeCsv(String value) {
+    // Escape quotes by doubling them and wrap in quotes
+    final escaped = value.replaceAll('"', '""');
+    return '"$escaped"';
   }
 
   void _showImportPreviewDialog(ImportResult result) {
@@ -515,6 +605,10 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                 _importQuestions();
               } else if (value == 'template') {
                 _downloadTemplate();
+              } else if (value == 'export') {
+                _exportQuestions();
+              } else if (value == 'edit_quiz') {
+                _editQuiz();
               }
             },
             itemBuilder: (BuildContext context) {
@@ -529,6 +623,17 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                     ],
                   ),
                 ),
+                if (_questions.isNotEmpty)
+                  const PopupMenuItem<String>(
+                    value: 'export',
+                    child: Row(
+                      children: [
+                        Icon(Icons.file_download),
+                        SizedBox(width: 8),
+                        Text('Export CSV'),
+                      ],
+                    ),
+                  ),
                 const PopupMenuItem<String>(
                   value: 'template',
                   child: Row(
@@ -536,6 +641,17 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                       Icon(Icons.download),
                       SizedBox(width: 8),
                       Text('Download Template'),
+                    ],
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem<String>(
+                  value: 'edit_quiz',
+                  child: Row(
+                    children: [
+                      Icon(Icons.edit),
+                      SizedBox(width: 8),
+                      Text('Edit Quiz'),
                     ],
                   ),
                 ),
