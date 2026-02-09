@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class AnswerKeyScreen extends StatelessWidget {
   final List<Question> questions;
@@ -303,8 +302,6 @@ class AnswerKeyScreen extends StatelessWidget {
                 },
               ),
             ),
-
-            const CopyrightFooter(),
           ],
         ),
       ),

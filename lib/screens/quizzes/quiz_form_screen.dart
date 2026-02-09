@@ -2,17 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:slidequiz/models/subject.dart';
 import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/services/hive_service.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizFormScreen extends StatefulWidget {
   final Subject subject;
   final Quiz? quiz;
 
-  const QuizFormScreen({
-    super.key,
-    required this.subject,
-    this.quiz,
-  });
+  const QuizFormScreen({super.key, required this.subject, this.quiz});
 
   @override
   State<QuizFormScreen> createState() => _QuizFormScreenState();
@@ -50,7 +45,8 @@ class _QuizFormScreenState extends State<QuizFormScreen> {
 
   Future<void> _saveQuiz() async {
     if (_formKey.currentState!.validate()) {
-      final quiz = widget.quiz ??
+      final quiz =
+          widget.quiz ??
           Quiz(
             subjectId: widget.subject.id,
             name: _nameController.text.trim(),
@@ -82,7 +78,6 @@ class _QuizFormScreenState extends State<QuizFormScreen> {
     final isEditing = widget.quiz != null;
 
     return Scaffold(
-      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Quiz' : 'Add Quiz'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -142,10 +137,7 @@ class _QuizFormScreenState extends State<QuizFormScreen> {
             const SizedBox(height: 24),
             const Text(
               'Quiz Options',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Card(
@@ -165,7 +157,9 @@ class _QuizFormScreenState extends State<QuizFormScreen> {
                   const Divider(height: 1),
                   SwitchListTile(
                     title: const Text('Randomize Choices'),
-                    subtitle: const Text('Shuffle answer choices for multiple choice questions'),
+                    subtitle: const Text(
+                      'Shuffle answer choices for multiple choice questions',
+                    ),
                     value: _randomizeChoices,
                     onChanged: (value) {
                       setState(() {

@@ -5,7 +5,6 @@ import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizSetListScreen extends StatefulWidget {
   final Quiz quiz;
@@ -34,7 +33,7 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
 
   Future<void> _generateNewSet() async {
     final nameController = TextEditingController();
-    
+
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -54,10 +53,7 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
             const SizedBox(height: 16),
             Text(
               'This will create a new randomized set based on your quiz settings.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
           ],
         ),
@@ -87,14 +83,14 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
         quiz: widget.quiz,
         name: name,
       );
-      
+
       await _hiveService.addQuizSet(quizSet);
       _loadQuizSets();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Generated "$name"')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Generated "$name"')));
       }
     }
   }
@@ -123,9 +119,9 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
       await _hiveService.deleteQuizSet(quizSet.id);
       _loadQuizSets();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('${quizSet.name} deleted')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('${quizSet.name} deleted')));
       }
     }
   }
@@ -173,7 +169,6 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text('${widget.quiz.name} - Sets'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
@@ -191,18 +186,12 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
                   const SizedBox(height: 16),
                   Text(
                     'No sets generated yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 18, color: Colors.grey[600]),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Tap + to generate your first set',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[500]),
                   ),
                 ],
               ),
@@ -223,10 +212,7 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
                     ),
                     leading: CircleAvatar(
                       backgroundColor: Colors.purple,
-                      child: const Icon(
-                        Icons.folder,
-                        color: Colors.white,
-                      ),
+                      child: const Icon(Icons.folder, color: Colors.white),
                     ),
                     title: Text(
                       quizSet.name,
@@ -261,7 +247,10 @@ class _QuizSetListScreenState extends State<QuizSetListScreen> {
                             children: [
                               Icon(Icons.delete, color: Colors.red),
                               SizedBox(width: 8),
-                              Text('Delete', style: TextStyle(color: Colors.red)),
+                              Text(
+                                'Delete',
+                                style: TextStyle(color: Colors.red),
+                              ),
                             ],
                           ),
                         ),

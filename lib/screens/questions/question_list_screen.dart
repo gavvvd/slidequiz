@@ -6,7 +6,6 @@ import 'package:slidequiz/screens/questions/question_form_screen.dart';
 import 'package:slidequiz/models/quiz_set.dart';
 import 'package:slidequiz/screens/quiz/quiz_intro_screen.dart';
 import 'package:uuid/uuid.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:slidequiz/services/csv_import_service.dart';
@@ -320,22 +319,8 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
             _showErrorDialog(importResult.errors);
           }
         } else {
-          int count = 0;
-          for (var q in importResult.questions) {
-            await _hiveService.addQuestion(q);
-            count++;
-          }
-
-          // Add choices
-          for (var c in importResult.choices) {
-            await _hiveService.addChoice(c);
-          }
-
-          _loadQuestions();
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Successfully imported $count questions')),
-            );
+            _showImportPreviewDialog(importResult);
           }
         }
       }
@@ -344,6 +329,102 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Error importing CSV: $e')));
+      }
+    }
+  }
+
+  void _showImportPreviewDialog(ImportResult result) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Text('Preview Import (${result.questions.length} Questions)'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Please review the questions before importing.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.separated(
+                  itemCount: result.questions.length,
+                  separatorBuilder: (context, index) => const Divider(),
+                  itemBuilder: (context, index) {
+                    final question = result.questions[index];
+                    return ListTile(
+                      title: Text(
+                        question.questionText,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 4),
+                          Text('Type: ${question.type}'),
+                          Text(
+                            'Answer: ${question.answer}',
+                            style: const TextStyle(color: Colors.green),
+                          ),
+                        ],
+                      ),
+                      leading: CircleAvatar(
+                        backgroundColor: _getTypeColor(question.type),
+                        child: Text('${index + 1}'),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _saveImportedQuestions(result);
+            },
+            child: const Text('Import'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _saveImportedQuestions(ImportResult result) async {
+    try {
+      int count = 0;
+      for (var q in result.questions) {
+        await _hiveService.addQuestion(q);
+        count++;
+      }
+
+      // Add choices
+      for (var c in result.choices) {
+        await _hiveService.addChoice(c);
+      }
+
+      _loadQuestions();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Successfully imported $count questions')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving questions: $e')));
       }
     }
   }
@@ -595,7 +676,6 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
                 );
               },
             ),
-      bottomNavigationBar: const CopyrightFooter(),
       floatingActionButton: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [

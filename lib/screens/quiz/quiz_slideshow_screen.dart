@@ -130,30 +130,19 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
         _timer?.cancel();
         _pulseController.stop();
         _pulseController.reset();
-        setState(() {
-          _showAnswer = true;
-        });
+        _nextSlide();
       }
     });
   }
 
   void _nextSlide() {
-    if (_showAnswer) {
-      if (_currentIndex < _questions.length - 1) {
-        setState(() {
-          _currentIndex++;
-        });
-        _startQuestion();
-      } else {
-        _finishQuiz();
-      }
-    } else {
+    if (_currentIndex < _questions.length - 1) {
       setState(() {
-        _showAnswer = true;
+        _currentIndex++;
       });
-      _timer?.cancel();
-      _pulseController.stop();
-      _pulseController.reset();
+      _startQuestion();
+    } else {
+      _finishQuiz();
     }
   }
 
@@ -345,7 +334,24 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Answer Key Button (Left side)
+                  // Previous
+                  if (_currentIndex > 0)
+                    ElevatedButton.icon(
+                      onPressed: _previousSlide,
+                      icon: const Icon(Icons.arrow_back),
+                      label: const Text('Prev'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                    )
+                  else
+                    const SizedBox(
+                      width: 88,
+                    ), // Spacer to keep Next button consistently placed if Prev is missing
+                  // Answer Key Button (Center)
                   if (widget.quiz.showAnswerKey)
                     TextButton.icon(
                       onPressed: () {
@@ -361,34 +367,20 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
                       },
                       icon: const Icon(Icons.vpn_key),
                       label: const Text('Key'),
-                    )
-                  else
-                    const SizedBox(width: 80),
-
-                  // Previous
-                  if (_currentIndex > 0)
-                    ElevatedButton.icon(
-                      onPressed: _previousSlide,
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Prev'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 16,
-                        ),
-                      ),
                     ),
 
-                  // Next / Show Answer
+                  // Next
                   ElevatedButton.icon(
                     onPressed: _nextSlide,
-                    icon: Icon(_showAnswer ? Icons.arrow_forward : Icons.check),
+                    icon: Icon(
+                      _currentIndex == _questions.length - 1
+                          ? Icons.check
+                          : Icons.arrow_forward,
+                    ),
                     label: Text(
-                      _showAnswer
-                          ? (_currentIndex == _questions.length - 1
-                                ? 'Finish'
-                                : 'Next')
-                          : 'Show Answer',
+                      _currentIndex == _questions.length - 1
+                          ? 'Finish'
+                          : 'Next',
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Theme.of(context).primaryColor,

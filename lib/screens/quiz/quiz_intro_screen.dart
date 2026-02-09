@@ -4,7 +4,6 @@ import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/quiz_slideshow_screen.dart';
 import 'package:slidequiz/services/hive_service.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizIntroScreen extends StatefulWidget {
   final Quiz quiz;
@@ -39,16 +38,16 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
     // Assuming HiveService has getSubject(id) or similar.
     // If not, we might fail gracefully or need to add it.
     // Let's safe check based on existing patterns.
-    // Actually, usually Subjects are parent. 
+    // Actually, usually Subjects are parent.
     // If we can't fetch it easily here without Service update, we'll placeholder.
     // But let's try to fetch if we can.
-    
-    // Simplification: We need to see if we can get Subject. 
-    // Since I can't see HiveService right now in this step, I'll use a placeholder logic 
-    // or better, I should have checked HiveService first. 
+
+    // Simplification: We need to see if we can get Subject.
+    // Since I can't see HiveService right now in this step, I'll use a placeholder logic
+    // or better, I should have checked HiveService first.
     // But context says "Subject Name usually comes from Quiz model".
     // I will try to fetch it.
-    
+
     final subject = _hiveService.getSubject(widget.quiz.subjectId);
     if (subject != null) {
       setState(() {
@@ -78,7 +77,6 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const CopyrightFooter(),
       backgroundColor: Colors.white,
       body: Center(
         child: Padding(
@@ -110,11 +108,14 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
               if (widget.setName != null) ...[
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.blue[50],
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.blue[200]!)
+                    border: Border.all(color: Colors.blue[200]!),
                   ),
                   child: Text(
                     widget.setName!,
@@ -142,13 +143,13 @@ class _QuizIntroScreenState extends State<QuizIntroScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-               SizedBox(
+              SizedBox(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Cancel'),
                 ),
-               ),
+              ),
             ],
           ),
         ),

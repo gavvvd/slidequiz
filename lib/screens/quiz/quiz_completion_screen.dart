@@ -3,7 +3,6 @@ import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/models/question.dart';
 import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/screens/quiz/answer_key_screen.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class QuizCompletionScreen extends StatelessWidget {
   final Quiz quiz;
@@ -67,7 +66,6 @@ class QuizCompletionScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: const CopyrightFooter(),
     );
   }
 }

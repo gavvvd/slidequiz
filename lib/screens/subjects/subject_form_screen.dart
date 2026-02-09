@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:slidequiz/models/subject.dart';
 import 'package:slidequiz/services/hive_service.dart';
-import 'package:slidequiz/widgets/copyright_footer.dart';
 
 class SubjectFormScreen extends StatefulWidget {
   final Subject? subject;
@@ -36,7 +35,8 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
 
   Future<void> _saveSubject() async {
     if (_formKey.currentState!.validate()) {
-      final subject = widget.subject ??
+      final subject =
+          widget.subject ??
           Subject(
             name: _nameController.text.trim(),
             description: _descriptionController.text.trim(),
@@ -61,7 +61,6 @@ class _SubjectFormScreenState extends State<SubjectFormScreen> {
     final isEditing = widget.subject != null;
 
     return Scaffold(
-      bottomNavigationBar: const CopyrightFooter(),
       appBar: AppBar(
         title: Text(isEditing ? 'Edit Subject' : 'Add Subject'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
