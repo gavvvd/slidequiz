@@ -13,7 +13,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   String _pin = '';
-  String _error = '';
+
   final FocusNode _focusNode = FocusNode();
 
   @override
@@ -32,10 +32,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onDigitPress(String digit) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
     setState(() {
       if (_pin.length < 4) {
         _pin += digit;
-        _error = '';
       }
       if (_pin.length == 4) {
         _verifyPin();
@@ -44,10 +46,12 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _onDeletePress() {
+    if (mounted) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    }
     if (_pin.isNotEmpty) {
       setState(() {
         _pin = _pin.substring(0, _pin.length - 1);
-        _error = '';
       });
     }
   }
@@ -75,8 +79,16 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } else {
       setState(() {
+        if (mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Incorrect PIN'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
         _pin = '';
-        _error = 'Incorrect PIN';
       });
     }
   }
@@ -132,14 +144,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   );
                 }),
               ),
-              if (_error.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 16),
-                  child: Text(
-                    _error,
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
+
               const Spacer(),
               Expanded(
                 flex: 5,
