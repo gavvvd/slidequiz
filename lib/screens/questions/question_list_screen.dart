@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:slidequiz/models/quiz.dart';
 import 'package:slidequiz/models/question.dart';
+import 'package:slidequiz/models/choice.dart';
 import 'package:slidequiz/services/hive_service.dart';
 import 'package:slidequiz/screens/questions/question_form_screen.dart';
 import 'package:slidequiz/models/quiz_set.dart';
@@ -461,13 +462,13 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
         .whereType<Question>()
         .toList();
 
-    final Map<String, List<dynamic>> questionChoices = {};
+    final Map<String, List<Choice>> questionChoices = {};
     for (var questionId in quizSet.questionOrder) {
       if (quizSet.choiceOrders.containsKey(questionId)) {
         final choiceIds = quizSet.choiceOrders[questionId]!;
         final choices = choiceIds
             .map((id) => _hiveService.getChoice(id))
-            .whereType<dynamic>()
+            .whereType<Choice>()
             .toList();
         questionChoices[questionId] = choices;
       }
@@ -479,7 +480,7 @@ class _QuestionListScreenState extends State<QuestionListScreen> {
         builder: (context) => QuizIntroScreen(
           quiz: widget.quiz,
           questions: questions,
-          questionChoices: questionChoices.map((k, v) => MapEntry(k, v.cast())),
+          questionChoices: questionChoices,
           setName: quizSet.name,
         ),
       ),

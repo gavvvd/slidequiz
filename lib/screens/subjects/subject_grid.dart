@@ -80,6 +80,10 @@ class _SubjectGridState extends State<SubjectGrid> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Subjects'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+      ),
       body: _subjects.isEmpty
           ? Center(
               child: Column(

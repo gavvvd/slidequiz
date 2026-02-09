@@ -40,7 +40,8 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
   // Animation & Audio
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
-  final AudioPlayer _audioPlayer = AudioPlayer();
+  final AudioPlayer _effectsPlayer = AudioPlayer();
+  final AudioPlayer _timerPlayer = AudioPlayer();
 
   @override
   void initState() {
@@ -91,17 +92,32 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
   void dispose() {
     _timer?.cancel();
     _pulseController.dispose();
-    _audioPlayer.dispose();
+    _effectsPlayer.dispose();
+    _timerPlayer.dispose();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     super.dispose();
   }
 
-  void _playSound(String soundName) async {
-    // try {
-    //   await _audioPlayer.play(AssetSource('sounds/$soundName'));
-    // } catch (e) {
-    //   debugPrint('Error playing sound: $e');
-    // }
+  void _playEffect(String soundName) async {
+    try {
+      if (_effectsPlayer.state == PlayerState.playing) {
+        await _effectsPlayer.stop();
+      }
+      await _effectsPlayer.play(AssetSource('sounds/$soundName'));
+    } catch (e) {
+      debugPrint('Error playing effect: $e');
+    }
+  }
+
+  void _playTick() async {
+    try {
+      // Only play if not already playing
+      if (_timerPlayer.state != PlayerState.playing) {
+        await _timerPlayer.play(AssetSource('sounds/tick.mp3'));
+      }
+    } catch (e) {
+      debugPrint('Error playing tick: $e');
+    }
   }
 
   void _startQuestion() {
@@ -111,7 +127,12 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
 
     _pulseController.reset();
     _startTimer();
-    _playSound('next_slide.mp3');
+    _playEffect('next_slide.mp3');
+
+    // Play tick sound immediately if duration is 10 seconds or less
+    if (_remainingSeconds <= 10) {
+      _playTick();
+    }
   }
 
   void _startTimer() {
@@ -122,14 +143,14 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
           _remainingSeconds--;
         });
 
-        if (_remainingSeconds <= 10) {
-          _playSound('tick.mp3');
-          _pulseController.repeat(reverse: true);
+        if (_remainingSeconds == 10) {
+          _playTick();
         }
       } else {
         _timer?.cancel();
         _pulseController.stop();
         _pulseController.reset();
+        _timerPlayer.stop(); // Stop tick sound when time is up
         _nextSlide();
       }
     });
@@ -152,12 +173,15 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
         _currentIndex--;
         _startQuestion();
       });
-      _playSound('prev_slide.mp3');
+      _timerPlayer.stop(); // Stop any ticking
+      _playEffect('prev_slide.mp3');
     }
   }
 
   void _finishQuiz() {
     _timer?.cancel();
+    _effectsPlayer.stop();
+    _timerPlayer.stop();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -201,7 +225,6 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
     double screenHeight = MediaQuery.of(context).size.height;
     double questionFontSize = screenHeight * 0.04;
     double choiceFontSize = screenHeight * 0.025;
-    double numberFontSize = screenHeight * 0.025;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -585,8 +608,6 @@ class _QuizSlideshowScreenState extends State<QuizSlideshowScreen>
     if (question.type == 'Enumeration') {
       final answers = question.answer.split(RegExp(r'[\n,]'));
       return ListView(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
         children: answers.map((ans) {
           if (ans.trim().isEmpty) return const SizedBox.shrink();
           return Container(
